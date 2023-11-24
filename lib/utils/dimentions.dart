@@ -1,0 +1,1 @@
+const webDimention = 600;
