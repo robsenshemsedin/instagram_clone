@@ -1,3 +1,3 @@
 export 'colors.dart';
-export 'dimentions.dart';
+export 'global_variables.dart';
 export 'utils.dart';
