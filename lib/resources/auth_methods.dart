@@ -6,7 +6,7 @@ import 'package:instagram_clone/resources/resources_export.dart';
 
 class AuthMethods {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  static final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<model.User> getUserDetail() async {
     final userId = _auth.currentUser?.uid;
@@ -24,6 +24,7 @@ class AuthMethods {
     required Uint8List? imageData,
   }) async {
     String res = "Unkown error Occurred";
+    String photoUrl = 'empty';
     try {
       if (email.isNotEmpty &&
           password.isNotEmpty &&
@@ -34,17 +35,18 @@ class AuthMethods {
         UserCredential cred = await _auth.createUserWithEmailAndPassword(
             email: email, password: password);
 
-        _firestore.collection('users').doc(cred.user?.uid).set({
+        photoUrl = await StorageMethods().uploadImage(
+            childName: 'profilePics', isPost: false, imageData: imageData);
+
+        await _firestore.collection('users').doc(cred.user?.uid).set({
           'username': username,
           'uid': cred.user!.uid,
-          // 'photoUrl': photoUrl,
+          'photoUrl': photoUrl,
           'email': email,
           'bio': bio,
           'followers': [],
           'following': [],
         });
-        await Storage().uploadImage(
-            childName: 'profilePics', isPost: false, imageData: imageData);
         res = "success";
       } else {
         res = "Please enter all the fields";
@@ -67,7 +69,7 @@ class AuthMethods {
     return res;
   }
 
-  void signoutUser() {
+  static void signoutUser() {
     _auth.signOut();
   }
 }
