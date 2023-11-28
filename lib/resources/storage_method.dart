@@ -15,7 +15,6 @@ class StorageMethods {
 
     Reference ref =
         storageInstance.ref().child(childName).child(auth.currentUser!.uid);
-
     if (isPost) {
       final String uuid = const UuidV1().generate();
       ref = ref.child(uuid);
