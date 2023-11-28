@@ -22,37 +22,38 @@ class InstagramClone extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return ChangeNotifierProvider(
+      create: (context) => UserProvider(),
+      child: MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: ThemeData.dark().copyWith(
             scaffoldBackgroundColor: mobileBackgroundColor,
             progressIndicatorTheme:
                 const ProgressIndicatorThemeData(color: primaryColor)),
-        home: ChangeNotifierProvider(
-          create: (context) => UserProvider(),
-          child: StreamBuilder(
-              stream: FirebaseAuth.instance.authStateChanges(),
-              builder: ((context, AsyncSnapshot<User?> snapshot) {
-                if (snapshot.connectionState == ConnectionState.active) {
-                  // If the data is not null then the user is logged in aready.
-                  if (snapshot.hasData) {
-                    return const ResponsiveLayout(
-                      mobileScreenLayout: MobileScreenLayout(),
-                      webScreenLayout: WebScreenLayout(),
-                    );
-                  } else if (snapshot.hasError) {
-                    return Center(
-                      child: Text(snapshot.error.toString()),
-                    );
-                  }
-
-                  // If the user data is null then the user is not logged in.
-                  else {
-                    return const LoginScreen();
-                  }
+        home: StreamBuilder(
+            stream: FirebaseAuth.instance.authStateChanges(),
+            builder: ((context, AsyncSnapshot<User?> snapshot) {
+              if (snapshot.connectionState == ConnectionState.active) {
+                // If the data is not null then the user is logged in aready.
+                if (snapshot.hasData) {
+                  return const ResponsiveLayout(
+                    mobileScreenLayout: MobileScreenLayout(),
+                    webScreenLayout: WebScreenLayout(),
+                  );
+                } else if (snapshot.hasError) {
+                  return Center(
+                    child: Text(snapshot.error.toString()),
+                  );
                 }
-                return const Center(child: CircularProgressIndicator());
-              })),
-        ));
+
+                // If the user data is null then the user is not logged in.
+                else {
+                  return const LoginScreen();
+                }
+              }
+              return const Center(child: CircularProgressIndicator());
+            })),
+      ),
+    );
   }
 }
