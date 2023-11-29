@@ -61,7 +61,8 @@ class AuthMethods {
       {required String email, required String password}) async {
     String res = 'Unkown error occured';
     try {
-      await _auth.signInWithEmailAndPassword(email: email, password: password);
+      await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
       res = 'success';
     } catch (error) {
       res = error.toString();
@@ -69,7 +70,7 @@ class AuthMethods {
     return res;
   }
 
-  static void signoutUser() {
-    _auth.signOut();
+  Future<void> singOut() async {
+    await _auth.signOut();
   }
 }
