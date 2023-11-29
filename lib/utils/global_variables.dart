@@ -1,17 +1,17 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:instagram_clone/screens/contriant_practice.dart';
 import 'package:instagram_clone/screens/screens_export.dart';
 
-const webDimention = 600;
+const webScreenSize = 600;
 
-const homeScreens = [
-  FeedScreen(),
-  ConstriantPractice(),
-  AddPostScreen(),
-  Center(
+var homeScreens = [
+  const FeedScreen(),
+  const SearchScreen(),
+  const AddPostScreen(),
+  const Center(
     child: Text('Favorite'),
   ),
-  Center(
-    child: Text('Person'),
-  )
+  ProfileScreen(
+    uid: FirebaseAuth.instance.currentUser!.uid,
+  ),
 ];
