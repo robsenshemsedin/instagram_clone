@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:gap/gap.dart';
+import 'package:instagram_clone/providers/user_provider.dart';
 import 'package:instagram_clone/resources/resources_export.dart';
 import 'package:instagram_clone/responsive/responsive_export.dart';
 import 'package:instagram_clone/screens/screens_export.dart';
 import 'package:instagram_clone/utils/utils_export.dart';
 import 'package:instagram_clone/widgets/widgets_export.dart';
+import 'package:provider/provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -33,6 +35,8 @@ class _LoginScreenState extends State<LoginScreen> {
         email: _emailController.text, password: _passwordController.text);
     if (res == 'success') {
       if (context.mounted) {
+        await Provider.of<UserProvider>(context, listen: false).refreshUser();
+        if (!context.mounted) return;
         Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(
               builder: (context) => const ResponsiveLayout(
@@ -63,7 +67,10 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 32),
+          padding: MediaQuery.of(context).size.width > webScreenSize
+              ? EdgeInsets.symmetric(
+                  horizontal: MediaQuery.of(context).size.width / 3)
+              : const EdgeInsets.symmetric(horizontal: 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
