@@ -42,3 +42,14 @@ class User {
         "following": following,
       };
 }
+
+class Settings {
+  static Settings? _instance;
+
+  factory Settings() {
+    _instance ??= Settings._internal();
+    return _instance!;
+  }
+
+  Settings._internal();
+}
