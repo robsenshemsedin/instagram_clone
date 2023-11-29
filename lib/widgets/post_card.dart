@@ -1,7 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:instagram_clone/providers/user_provider.dart';
+import 'package:instagram_clone/resources/resources_export.dart';
+import 'package:instagram_clone/screens/comments_screen.dart';
 import 'package:instagram_clone/utils/colors.dart';
+import 'package:instagram_clone/utils/utils_export.dart';
+import 'package:instagram_clone/widgets/widgets_export.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 class PostCard extends StatefulWidget {
   final Map<String, dynamic> snapshot;
@@ -15,6 +21,19 @@ class PostCard extends StatefulWidget {
 }
 
 class _PostCardState extends State<PostCard> {
+  bool isLikeAnimating = false;
+  void deletePost() async {
+    final res = await FirestoreMethos()
+        .deletePost(widget.snapshot['postId'].toString());
+    if (res == 'success') {
+      if (!context.mounted) return;
+      showSnackBar(context, 'Deleted successfully');
+    } else {
+      if (!context.mounted) return;
+      showSnackBar(context, res);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -22,11 +41,13 @@ class _PostCardState extends State<PostCard> {
 
   @override
   Widget build(BuildContext context) {
+    final user = Provider.of<UserProvider>(context, listen: false).getUser;
+    final width = MediaQuery.of(context).size.width;
     return Container(
       // boundary needed for web
       decoration: BoxDecoration(
         border: Border.all(
-          color: mobileBackgroundColor,
+          color: width > webScreenSize ? secondaryColor : mobileBackgroundColor,
         ),
         color: mobileBackgroundColor,
       ),
@@ -88,6 +109,7 @@ class _PostCardState extends State<PostCard> {
                                           child: Text(e),
                                         ),
                                         onTap: () {
+                                          deletePost();
                                           Navigator.of(context).pop();
                                         }),
                                   )
@@ -102,8 +124,18 @@ class _PostCardState extends State<PostCard> {
             ),
           ),
           // IMAGE SECTION OF THE POST
+
           GestureDetector(
-            onDoubleTap: () {},
+            onDoubleTap: () {
+              FirestoreMethos().likePost(
+                widget.snapshot['postId'].toString(),
+                user.uid,
+                widget.snapshot['likes'],
+              );
+              setState(() {
+                isLikeAnimating = true;
+              });
+            },
             child: Stack(
               alignment: Alignment.center,
               children: [
@@ -113,6 +145,26 @@ class _PostCardState extends State<PostCard> {
                   child: Image.network(
                     widget.snapshot['postUrl'].toString(),
                     fit: BoxFit.cover,
+                  ),
+                ),
+                AnimatedOpacity(
+                  duration: const Duration(milliseconds: 200),
+                  opacity: isLikeAnimating ? 1 : 0,
+                  child: LikeAnimation(
+                    isAnimating: isLikeAnimating,
+                    duration: const Duration(
+                      milliseconds: 400,
+                    ),
+                    onEnd: () {
+                      setState(() {
+                        isLikeAnimating = false;
+                      });
+                    },
+                    child: const Icon(
+                      Icons.favorite,
+                      color: Colors.white,
+                      size: 100,
+                    ),
                   ),
                 ),
               ],
@@ -126,12 +178,24 @@ class _PostCardState extends State<PostCard> {
                     Icons.favorite,
                     color: Colors.red,
                   ),
-                  onPressed: () {}),
+                  onPressed: () {
+                    FirestoreMethos().likePost(
+                        widget.snapshot['postId'].toString(),
+                        user.uid,
+                        widget.snapshot['likes']);
+                  }),
               IconButton(
                 icon: const Icon(
                   Icons.comment_outlined,
                 ),
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => CommentsScreen(
+                                postId: widget.snapshot['postId'].toString(),
+                              )));
+                },
               ),
               IconButton(
                   icon: const Icon(
@@ -179,13 +243,43 @@ class _PostCardState extends State<PostCard> {
                 InkWell(
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: const Text(
-                      'View all 4 comments',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: secondaryColor,
-                      ),
-                    ),
+                    child: StreamBuilder(
+                        stream: FirebaseFirestore.instance
+                            .collection('posts')
+                            .doc(widget.snapshot['postId'].toString())
+                            .collection('comments')
+                            .snapshots(),
+                        builder: (context,
+                            AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>>
+                                snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.active) {
+                            if (snapshot.hasData) {
+                              return Text(
+                                'View all ${snapshot.data!.docs.length} comments',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: secondaryColor,
+                                ),
+                              );
+                            } else if (snapshot.hasError) {
+                              return const Text(
+                                'View all comments',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: secondaryColor,
+                                ),
+                              );
+                            }
+                          }
+                          return const Text(
+                            'View all  comments',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: secondaryColor,
+                            ),
+                          );
+                        }),
                   ),
                   onTap: () {},
                 ),
